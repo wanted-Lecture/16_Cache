@@ -1,0 +1,30 @@
+spring:
+  application:
+    name: module01-spring-cache
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/menudb
+    username: wanted
+    password: wanted
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        format_sql: true
+        show_sql: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,caches,metrics
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    enable:
+
+      cache: true
