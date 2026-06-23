@@ -3,10 +3,10 @@ package com.wanted.cache.product;
 import com.wanted.cache.cache.CacheNames;
 import com.wanted.cache.support.SlowSimulator;
 import lombok.RequiredArgsConstructor;
-import org.springframework.cache.annotation.CacheConfig;
-import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 
@@ -84,5 +84,41 @@ public class ProductService {
         slowSimulator.searchQueryLatency();
 
        return searchProducts(keyword, category, minPrice, maxPrice);
+    }
+
+    // CachePut 은 캐시 히트 여부와 관계 없이 메서드 본문을 실행한다.
+    // 수정하기 위해서는 해당 캐시에 접근할 수 있는 key값이 필요
+    @CachePut(key = "#id")
+    public Product refreshProduct(Long id) {
+        slowSimulator.detailQueryLatency();
+        return findProduct(id);
+    }
+
+    // id 값에 해당하는 캐시 데이터를 무효화(제거) 한다.
+    @CacheEvict(key = "#id")
+    public void evictProduct(Long id) {
+        System.out.println("======캐시 공간 무효화 진행 완료=======");
+    }
+
+    /* Comment
+    *   @Caching 은 여러 캐시 작업을 한 번에 묶을 수 있다.
+    *   재고 변경 등에 의한 캐시 재설정은 put 보다는 evict 을 사용해서 기존 캐실르 날리고
+    *   새롭게 만드는 방법을 훨씬 많이 쓰게 된다.
+    *   evict allEntries = true 는 PRODUCT_SEARCH 캐시 전체를 비우는 명령어이다.
+    *   해당 명령어는 단순하고 안전하지만, PRODUCT_SEARCH 캐시가 많을수록 재생성 비용이 커질 수 있다.
+    *   Trade-off 가 발생한다.
+    * */
+    @Transactional // dml 구문
+    @Caching(
+            put = @CachePut(key = "#id"),
+            evict = @CacheEvict(cacheNames = CacheNames.PRODUCT_SEARCH, allEntries = true)
+    )
+    public Product changeStock(Long id, int stock) {
+
+        Product product = findProduct(id);
+
+        product.changeStock(stock);
+
+        return product;
     }
 }

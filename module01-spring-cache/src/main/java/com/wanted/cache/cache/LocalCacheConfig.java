@@ -38,7 +38,7 @@ public class LocalCacheConfig {
         cacheManager.setCaffeine(
                 Caffeine.newBuilder()
                         // 캐시 폭발을 방지하기 위해, 최대 캐시 항목 수 지정
-                        .maximumSize(1_00)
+                        .maximumSize(1_000)
                         // 오래 된 캐시가 무한히 남지 않게 만료 시간(TTL) 을 둔다.
                         .expireAfterAccess(Duration.ofMinutes(5)) // 5분 후 캐시 만료
                         // 캐시 히트 비율, 미스 비율 등을 지표로 볼 수있게 통계를 기록한다.
@@ -50,6 +50,18 @@ public class LocalCacheConfig {
                                 (key, value, cause)
                                 -> System.out.printf("cache removed: key=%s , cause=%s%n", key , cause))
         );
+
+        /* Comment
+        *   현재 cacheManager 설정은 모든 종류의 캐시가 5분 만료 시간을 가질 수 있다.
+        *   하지만, 캐시의 종류에 따라서 TTL 설정은 달라져야 한다.
+        * */
+//        cacheManager.registerCustomCache(
+//                "PRODUCT_ALL",
+//                Caffeine.newBuilder()
+//                        .maximumSize(5_000)
+//                        .expireAfterAccess(Duration.ofHours(5))
+//                        .build()
+//                );
 
         return cacheManager;
     }
